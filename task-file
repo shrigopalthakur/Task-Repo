@@ -1,0 +1,32 @@
+upstream backend_app {
+    server 127.0.0.1:5000;
+}
+
+server {
+    listen 80;
+    server_name example.com www.example.com;
+
+    root /var/www/html;
+
+    # 2- Server static content using web server nginx 
+    location ~* \.(jpg|jpeg|png|gif|css|js|ico|html)$ {
+        try_files $uri $uri/ =404;
+        expires 30d;
+        access_log off;
+    }
+
+    # Proxy to backend
+    location / {
+        proxy_pass http://backend_app;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+# 4 - - Redirect hit on any subdomain to another subdomain
+server {                                             
+    listen 80;
+    server_name *.example.com;
+
+    return 301 https://app.example.com$request_uri;
